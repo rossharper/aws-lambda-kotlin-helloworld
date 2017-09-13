@@ -8,10 +8,9 @@ import java.io.OutputStream
 
 data class HandlerInput(val name: String)
 
-sealed class HandlerOutput {
-    data class Greeting(val greeting: String) : HandlerOutput()
-    data class Error(val error: String) : HandlerOutput()
-}
+sealed class HandlerOutput
+data class Greeting(val greeting: String) : HandlerOutput()
+data class Error(val error: String) : HandlerOutput()
 
 class Main {
     fun handler(input: InputStream, output: OutputStream): Unit {
@@ -20,19 +19,20 @@ class Main {
         val handlerInput = inputAdapter.fromJson(Okio.buffer(Okio.source(input)))
 
         if(handlerInput == null) {
-            respond(HandlerOutput.Error("Bad Request"), output)
+            output with Error("Bad Request")
         } else {
-            val greeting = "Hello, ${handlerInput.name}. Welcome to my Kotlin AWS SuperLambBanana"
-            respond(HandlerOutput.Greeting(greeting), output)
+            output with Greeting("Hello, ${handlerInput.name}. Welcome to my Kotlin AWS SuperLambBanana")
         }
     }
 
-    inline fun <reified T : HandlerOutput> respond(response: T, output: OutputStream) {
-        val bufferedSink = Okio.buffer(Okio.sink(output))
+    inline infix fun <reified T : HandlerOutput> OutputStream.with(response: T) {
+        val bufferedSink = Okio.buffer(Okio.sink(this))
         Moshi.Builder()
                 .build()
-                .adapter<T>(T::class.java)
+                .adapter(T::class.java)
                 .toJson(bufferedSink, response)
         bufferedSink.emit()
     }
+
 }
+
