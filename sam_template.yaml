@@ -1,0 +1,18 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Hello Kotlin Lambda World
+Resources:
+  HelloKotlinLambdaWorldGateway:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: net.rossharper.awshelloworld.Main::handler
+      Runtime: java8
+      CodeUri: s3://awshelloworld/aws-lambda-kotlin-helloworld-1.0-SNAPSHOT-all.jar
+      Timeout: 30
+      MemorySize: 1024
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /test
+            Method: post
