@@ -2,48 +2,7 @@ AWSTemplateFormatVersion : '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Hello Kotlin Lambda World
 Resources:
-  HelloKotlinLambdaWorldApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      Name: HelloKotlinLambdaWorldApi
-      DefinitionBody: 
-        swagger: 2.0
-        basePath: /prod
-        info:
-          title: HelloKotlinLambdaWorldApi
-        schemes:
-          - https
-        paths:
-          '/test':
-            post:
-              produces:
-              - application/json
-              responses:
-                '200':
-                  description: 200 response
-                  schema:
-                    $ref: "#/definitions/Empty"
-            x-amazon-apigateway-integration:
-              responses:
-                default:
-                  statusCode: 200
-              uri: arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:373806372146:function:HelloKotlinLambdaWorldFunction/invocations
-              passthroughBehavior: when_no_match
-              httpMethod: POST
-              type: aws
-
-        passthroughBehavior: when_no_match
-        httpMethod: POST
-        type: aws_proxy
-        definitions:
-          Empty:
-            type: object
-            title: Empty Schema
-      Variables:
-        LambdaFunctionName: !Ref HelloKotlinLambdaWorldFunction
-      StageName: prod
-  
-  HelloKotlinLambdaWorldFunction:
+  HelloKotlinLambdaWorldGateway:
     Type: AWS::Serverless::Function
     Properties:
       Handler: net.rossharper.awshelloworld.Main::handler
@@ -55,6 +14,5 @@ Resources:
         GetResource:
           Type: Api
           Properties:
-            RestApiId: !Ref HelloKotlinLambdaWorldApi
             Path: /test
             Method: post
