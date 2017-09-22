@@ -7,6 +7,7 @@ import java.io.InputStream
 import java.io.OutputStream
 
 data class Request(val body: String)
+data class Response(val statusCode: Int, val body: String)
 
 data class HandlerInput(val name: String)
 
@@ -14,29 +15,37 @@ sealed class HandlerOutput
 data class Greeting(val greeting: String) : HandlerOutput()
 data class Error(val error: String) : HandlerOutput()
 
-data class Response(val statusCode: Int, val body: String)
-
 class Main {
     fun handler(input: InputStream, output: OutputStream): Unit {
-        val handlerInput = input.parse()
 
-        if(handlerInput == null) {
-            output with Error("Bad Request")
-        } else {
-            output with Greeting("Hello, ${handlerInput.name}. Welcome to my Kotlin AWS SuperLambBanana")
+        val request = input.parseRequest()
+
+        if(request !is Request) {
+            output with Error("Bad Request: failed to parse request")
+            return
         }
+
+        val handlerInput = request.parseBody()
+
+        if(handlerInput !is HandlerInput) {
+            output with Error("Bad Request: failed to parse request body")
+            return
+        }
+
+        output with Greeting("Hello, ${handlerInput.name}. Welcome to my Kotlin AWS SuperLambBanana")
     }
 }
 
-private fun InputStream.parse(): HandlerInput? {
+private fun InputStream.parseRequest() : Request? {
     val moshi = Moshi.Builder().build()
     val requestAdapter : JsonAdapter<Request> = moshi.adapter(Request::class.java)
-    val body = requestAdapter.fromJson(Okio.buffer(Okio.source(this)))?.body
-    body?.let {
-        val inputAdapter : JsonAdapter<HandlerInput> = moshi.adapter(HandlerInput::class.java)
-        return inputAdapter.fromJson(it)
-    }
-    return null
+    return requestAdapter.fromJson(Okio.buffer(Okio.source(this)))
+}
+
+private fun Request.parseBody() : HandlerInput? {
+    val moshi = Moshi.Builder().build()
+    val inputAdapter : JsonAdapter<HandlerInput> = moshi.adapter(HandlerInput::class.java)
+    return inputAdapter.fromJson(this.body)
 }
 
 private inline infix fun <reified T : HandlerOutput> OutputStream.with(output: T) {
